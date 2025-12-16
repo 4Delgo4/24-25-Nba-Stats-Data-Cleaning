@@ -1,0 +1,88 @@
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv('database_24_25.csv')
+
+df.columns = (
+    df.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(" ", "_")
+)
+#adding columns to clean data and drop old ones later
+#FIX
+
+df["Win"] = (df["res"] == "W").astype(int)
+df["Wins"] = df.groupby("player")["Win"].transform("sum")
+#Losses
+df['Lose'] = (df['res'] == 'L').astype(int)
+df["Loss"] = df.groupby("player")["Lose"].transform("sum")
+df['Games Played'] = df['Wins'] + df['Loss']
+
+#Total Minutes played
+df['Minutes Played'] = round(df.groupby("player")["mp"].transform("sum"), 2)
+
+#point-total and points per game
+df['Total Points'] = df.groupby("player")["pts"].transform("sum")
+df['PPG'] = round(df['Total Points'] / df['Games Played'], 2)
+
+#Assist per game and total assist
+df['Total Assists'] = df.groupby("player")["ast"].transform("sum")
+df['APG'] = round(df['Total Assists'] / df['Games Played'], 2)
+
+#Field goals
+df['FGM'] = df.groupby("player")["fg"].transform("sum")
+df['FGA'] = df.groupby("player")["fga"].transform("sum")
+#3 point
+df['3PM'] = df.groupby("player")["3p"].transform("sum")
+df['3PA'] = df.groupby("player")["3pa"].transform("sum")
+
+#Free throw
+df['FTM'] = df.groupby("player")["ft"].transform("sum")
+df['FTA'] = df.groupby("player")["fta"].transform("sum")
+
+#Rebounds- total rebounds and Rebounds per game
+Oreb = df.groupby("player")["orb"].transform("sum")
+Dreb = df.groupby("player")["drb"].transform("sum")
+df['Rebounds'] = Oreb + Dreb
+#FIX
+df['RPG'] = round(df['Rebounds'] / df['Games Played'], 2)
+
+#Steals- total steals and steals per game
+df['Total Steals'] = df.groupby("player")["stl"].transform("sum")
+df['STLpg'] = round(df['Total Steals'] / df['Games Played'], 2)
+
+#Blocks- Total blocks and blocks per game
+df['Blocks'] = df.groupby("player")["blk"].transform("sum")
+df['BLKpg'] = round(df['Blocks'] / df['Games Played'], 2)
+
+#Total Personal fouls and Turnovers
+df['Personal Fouls'] = df.groupby("player")["pf"].transform("sum")
+df['Turnovers'] = df.groupby("player")["tov"].transform("sum")
+
+
+#Calculating percentage
+df['FG%'] = round((df['FGM'] / df['FGA'] ) * 100, 2)
+df['3P%'] = round((df['3PM'] / df['3PA']) * 100, 2)
+df['FT%'] = round((df['FTM'] / df['FTA']) * 100, 2)
+
+#new columns
+columns_to_keep = [
+    "player", "tm",
+    "Wins", "Loss", "Games Played",
+    "Minutes Played", "Total Points", "PPG",
+    "Total Assists", "APG", "FGA", "FGM", "FG%",
+    "3PA", "3PM", "3P%", "FTA", "FTM", "FT%",
+    "Rebounds", "RPG", "Total Steals", "STLpg",
+    "Blocks", "BLKpg", "Personal Fouls", "Turnovers"
+
+]
+
+cleaned_df = (
+    df[columns_to_keep]
+    .drop_duplicates(subset=["player"])
+    .reset_index(drop=True)
+)
+print(cleaned_df)
+
+#cleaned_df[columns_to_keep].to_csv("Fin2024cleaned_data_stats.csv", index=False)
